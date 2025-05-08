@@ -99,6 +99,26 @@ public class AvatarTrigger {
         }
     }
 
+    public static void waitForAvatarAndUpload(long timeoutMillis, boolean silent) {
+        long startTime = System.currentTimeMillis();
+        Runnable checkTask = new Runnable() {
+            @Override
+            public void run() {
+                if (isAvatarLoaded()) {
+                    upload(silent);
+                    return;
+                }
+                if (System.currentTimeMillis() - startTime > timeoutMillis) {
+                    AvatarTrigger.notify("§c[KubeJS Figura] Avatar load timed out.");
+                    return;
+                }
+                // Try again next client tick
+                Minecraft.getInstance().tell(this);
+            }
+        };
+        Minecraft.getInstance().tell(checkTask);
+    }
+
     public static void handle(String avatarFolderName, boolean silent) {
         boolean prevSilent = isSilent;
         isSilent = silent;
@@ -127,14 +147,8 @@ public class AvatarTrigger {
 
             // 5) Happy path: load then upload
             load(avatarFolderName, isSilent);
-
             // wait up to 10s for it to actually load
-            long deadline = System.currentTimeMillis() + 10_000;
-            while (System.currentTimeMillis() < deadline && !isAvatarLoaded()) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ignored) {}
-            }
+            waitForAvatarAndUpload(10_000, isSilent);
 
             if (!isAvatarLoaded()) {
                 notify("§c[KubeJS Figura] Avatar load timed out.");
