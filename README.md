@@ -8,9 +8,7 @@ For safety, it can only load avatars that already exist in the players avatar fo
 
 const StringArgumentType = Java.loadClass("com.mojang.brigadier.arguments.StringArgumentType");
 const ServerPlayer = Java.loadClass("net.minecraft.server.level.ServerPlayer");
-const AutoFiguraMod = Java.loadClass("com.confect1on.kubejs_figura.KubeJSFiguraMod");
-const AvatarActionPacket = Java.loadClass("com.confect1on.kubejs_figura.AvatarActionPacket");
-const PacketDistributor = Java.loadClass("net.minecraftforge.network.PacketDistributor");
+const KJSFigura = Java.loadClass("com.confect1on.kubejs_figura.KubeJSFiguraMod");
 
 ServerEvents.commandRegistry(event => {
   const { commands: Commands } = event;
@@ -18,16 +16,13 @@ ServerEvents.commandRegistry(event => {
   event.register(
     Commands.literal("figuraLoad")
       .then(
-        Commands.argument("model", StringArgumentType.string())
+        Commands.argument("model", StringArgumentType.greedyString())
           .executes(ctx => {
             const player = ctx.source.entity;
             const model = StringArgumentType.getString(ctx, "model");
 
             if (player instanceof ServerPlayer) {
-              AutoFiguraMod.CHANNEL.send(
-                PacketDistributor.PLAYER.with(() => player),
-                new AvatarActionPacket("load", model, false)
-              );
+              KJSFigura.load(player, model);
             }
 
             return 1;
@@ -41,30 +36,23 @@ ServerEvents.commandRegistry(event => {
         const player = ctx.source.entity;
 
         if (player instanceof ServerPlayer) {
-          AutoFiguraMod.CHANNEL.send(
-            PacketDistributor.PLAYER.with(() => player),
-            new AvatarActionPacket("upload", "", false)
-          );
+          KJSFigura.upload(player);
         }
 
         return 1;
       })
   );
 
-// The handle action combines load and upload with additional safety checks.
   event.register(
     Commands.literal("figuraHandle")
       .then(
-        Commands.argument("charName", StringArgumentType.string())
+        Commands.argument("charName", StringArgumentType.greedyString())
           .executes(ctx => {
             const player = ctx.source.entity;
             const charName = StringArgumentType.getString(ctx, "charName");
 
             if (player instanceof ServerPlayer) {
-              AutoFiguraMod.CHANNEL.send(
-                PacketDistributor.PLAYER.with(() => player),
-                new AvatarActionPacket("handle", charName, false)
-              );
+              KJSFigura.handle(player, charName, false);
             }
 
             return 1;

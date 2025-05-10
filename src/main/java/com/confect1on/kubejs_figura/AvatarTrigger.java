@@ -70,6 +70,7 @@ public class AvatarTrigger {
     }
 
     public static void upload(boolean silent) {
+        // silent isnt really used here, but it keeps it consistent!
         boolean prevSilent = isSilent;
         isSilent = silent;
 
@@ -81,7 +82,7 @@ public class AvatarTrigger {
             Object avatar = avatarManager.getMethod("getAvatarForPlayer", UUID.class).invoke(null, uuid);
 
             if (avatar == null) {
-                notify("§c[KubeJS Figura] No avatar is currently loaded.");
+                LOGGER.warn("No avatar is currently loaded.");
                 return;
             }
 
@@ -89,10 +90,8 @@ public class AvatarTrigger {
             networkStuff.getMethod("uploadAvatar", avatar.getClass()).invoke(null, avatar);
 
             uploadTimestamps.addLast(System.currentTimeMillis());
-            notify("§a[KubeJS Figura] Upload complete.");
             LOGGER.info("Uploaded Figura avatar for player UUID: {}", uuid);
         } catch (Exception e) {
-            notify("§c[KubeJS Figura] Upload failed.");
             LOGGER.error("Failed to upload Figura avatar", e);
         } finally {
             isSilent = prevSilent;
@@ -149,13 +148,6 @@ public class AvatarTrigger {
             load(avatarFolderName, isSilent);
             // wait up to 10s for it to actually load
             waitForAvatarAndUpload(10_000, isSilent);
-
-            if (!isAvatarLoaded()) {
-                notify("§c[KubeJS Figura] Avatar load timed out.");
-                return;
-            }
-
-            upload(isSilent);
         } catch (Exception e) {
             LOGGER.error("Error in AvatarTrigger.handle()", e);
             notify("§c[KubeJS Figura] Failed to load or upload avatar.");
